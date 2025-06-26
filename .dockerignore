@@ -1,0 +1,36 @@
+# Docker ignore file for GLib Knowledge Base
+# Build artifacts
+builddir/
+*.o
+*.so
+*.a
+test_menu
+libglib_features.so
+
+# Version control
+.git/
+.gitignore
+
+# IDE files
+.vscode/
+*.swp
+*.swo
+*~
+
+# Documentation
+README.md
+*.md
+
+# Scripts
+*.sh
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
