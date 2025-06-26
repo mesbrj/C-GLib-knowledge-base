@@ -21,7 +21,7 @@ This project demonstrates three fundamental concepts in computer science:
 ## Features Demonstrated
 
 ### Double Linked Lists (GList)
-**Computer Science Fundamentals**: [Linked List Data Structure](https://en.wikipedia.org/wiki/Linked_list)
+**Computer Science Fundamentals**: [Doubly linked list Data Structure](https://en.wikipedia.org/wiki/Doubly_linked_list)
 
 - **Dynamic Collections**: Demonstrates dynamic memory allocation and pointer-based data structures
 - **List Operations**: Insertion (O(1) prepend, O(n) append), deletion (O(n)), traversal (O(n))
@@ -380,22 +380,14 @@ Contributions are welcome. Areas for enhancement:
 - Unit tests with GLib's testing framework
 - Windows compatibility improvements
 
-## License
-
-This project is provided for educational purposes. See individual source files for specific licensing information.
-
 ## Resources
+
+- [IBM: Manage C data using the GLib collections](https://developer.ibm.com/tutorials/l-glib/)
+- [Getting Started with GLib](https://remcokranenburg.com/2021/05/30/getting-started-with-glib.html)
+- [Asynchronous operations in C with GObject](https://www.youtube.com/watch?v=rJS2TrkFIAs)
 
 - [GLib Documentation](https://docs.gtk.org/glib/)
 - [GLib Tutorial](https://developer.gnome.org/glib/stable/)
+
 - [Meson Build System](https://mesonbuild.com/)
 - [C Programming Best Practices](https://github.com/mcinglis/c-style)
-
-## Support
-
-For questions or issues:
-
-1. Check the comprehensive comments in source code
-2. Review GLib official documentation
-3. Create an issue in the repository
-4. Join the GNOME development community

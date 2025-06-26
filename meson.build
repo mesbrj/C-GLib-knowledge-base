@@ -1,7 +1,7 @@
 project('glib-demo', 'c',
   version : '1.0.0',
   default_options : ['warning_level=3',
-                     'c_std=c11'])
+                    'c_std=c11'])
 
 # Find GLib dependency
 glib_dep = dependency('glib-2.0', version : '>=2.50')
