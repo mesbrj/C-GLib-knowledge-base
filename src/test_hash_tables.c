@@ -2,9 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
-Student* student_new(const char *name, int student_id, double gpa, const char *major) {
-    Student *student = g_malloc(sizeof(Student));
+HashStudent* hash_student_new(const char *name, int student_id, double gpa, const char *major) {
+    HashStudent *student = g_malloc(sizeof(HashStudent));
     student->name = g_strdup(name);
     student->student_id = student_id;
     student->gpa = gpa;
@@ -12,7 +13,7 @@ Student* student_new(const char *name, int student_id, double gpa, const char *m
     return student;
 }
 
-void student_free(Student *student) {
+void hash_student_free(HashStudent *student) {
     if (student) {
         g_free(student->name);
         g_free(student->major);
@@ -20,25 +21,25 @@ void student_free(Student *student) {
     }
 }
 
-void student_print(Student *student) {
+void hash_student_print(HashStudent *student) {
     if (student) {
         printf("  ID: %d, Name: %s, GPA: %.2f, Major: %s\n", 
                student->student_id, student->name, student->gpa, student->major);
     }
 }
 
-void hash_table_add_student(GHashTable *table, const char *key, Student *student) {
+void hash_table_add_student(GHashTable *table, const char *key, HashStudent *student) {
     g_hash_table_insert(table, g_strdup(key), student);
 }
 
 // Helper function to print hash table contents
 void print_hash_entry(gpointer key, gpointer value, gpointer user_data) {
     const char *student_key = (const char*)key;
-    Student *student = (Student*)value;
+    HashStudent *student = (HashStudent*)value;
     int *count = (int*)user_data;
     
     printf("%d. Key: '%s' -> ", ++(*count), student_key);
-    student_print(student);
+    hash_student_print(student);
 }
 
 void hash_table_print_all(GHashTable *table) {
@@ -55,7 +56,7 @@ void hash_table_print_all(GHashTable *table) {
 
 // Helper function to collect high GPA students
 void collect_high_gpa_students(gpointer key, gpointer value, gpointer user_data) {
-    Student *student = (Student*)value;
+    HashStudent *student = (HashStudent*)value;
     GList **high_gpa_list = (GList**)user_data;
     
     if (student->gpa >= 3.5) {
@@ -65,7 +66,7 @@ void collect_high_gpa_students(gpointer key, gpointer value, gpointer user_data)
 
 // Helper function to find students by major
 void find_students_by_major(gpointer key, gpointer value, gpointer user_data) {
-    Student *student = (Student*)value;
+    HashStudent *student = (HashStudent*)value;
     const char *target_major = ((const char**)user_data)[0];
     GList **major_list = (GList**)((const char**)user_data)[1];
     
@@ -82,17 +83,17 @@ void test_hash_tables(void) {
         g_str_hash,           // hash function for string keys
         g_str_equal,          // key comparison function
         g_free,               // key destructor
-        (GDestroyNotify)student_free  // value destructor
+        (GDestroyNotify)hash_student_free  // value destructor
     );
     
     printf("\n1. Creating student database...\n");
     
     // Add students to hash table
-    Student *s1 = student_new("Emma Wilson", 1001, 3.8, "Computer Science");
-    Student *s2 = student_new("Liam Johnson", 1002, 3.2, "Mathematics");
-    Student *s3 = student_new("Sophia Davis", 1003, 3.9, "Physics");
-    Student *s4 = student_new("Noah Brown", 1004, 2.8, "Computer Science");
-    Student *s5 = student_new("Olivia Miller", 1005, 3.6, "Chemistry");
+    HashStudent *s1 = hash_student_new("Emma Wilson", 1001, 3.8, "Computer Science");
+    HashStudent *s2 = hash_student_new("Liam Johnson", 1002, 3.2, "Mathematics");
+    HashStudent *s3 = hash_student_new("Sophia Davis", 1003, 3.9, "Physics");
+    HashStudent *s4 = hash_student_new("Noah Brown", 1004, 2.8, "Computer Science");
+    HashStudent *s5 = hash_student_new("Olivia Miller", 1005, 3.6, "Chemistry");
     
     hash_table_add_student(student_table, "emma.wilson", s1);
     hash_table_add_student(student_table, "liam.johnson", s2);
@@ -106,10 +107,10 @@ void test_hash_tables(void) {
     
     // Lookup by key
     const char *lookup_key = "sophia.davis";
-    Student *found_student = g_hash_table_lookup(student_table, lookup_key);
+    HashStudent *found_student = g_hash_table_lookup(student_table, lookup_key);
     if (found_student) {
         printf("Found student with key '%s': ", lookup_key);
-        student_print(found_student);
+        hash_student_print(found_student);
     }
     
     // Check if key exists
@@ -129,7 +130,7 @@ void test_hash_tables(void) {
     printf("Students with GPA >= 3.5:\n");
     for (GList *l = high_gpa_students; l != NULL; l = l->next) {
         printf("  ");
-        student_print((Student*)l->data);
+        hash_student_print((HashStudent*)l->data);
     }
     g_list_free(high_gpa_students);
     
@@ -142,7 +143,7 @@ void test_hash_tables(void) {
     printf("\nStudents majoring in %s:\n", target_major);
     for (GList *l = cs_students; l != NULL; l = l->next) {
         printf("  ");
-        student_print((Student*)l->data);
+        hash_student_print((HashStudent*)l->data);
     }
     g_list_free(cs_students);
     
@@ -160,38 +161,50 @@ void test_hash_tables(void) {
     g_list_free(keys);
     
     printf("\n5. Interactive part - Add a new student:\n");
-    char username[100], name[100], major[100];
-    int student_id;
-    double gpa;
     
-    printf("Enter username (key): ");
-    if (fgets(username, sizeof(username), stdin)) {
-        username[strcspn(username, "\n")] = 0;
+    // Check if stdin is available for interactive input
+    if (isatty(STDIN_FILENO)) {
+        char username[100], name[100], major[100];
+        int student_id;
+        double gpa;
         
-        printf("Enter student name: ");
-        if (fgets(name, sizeof(name), stdin)) {
-            name[strcspn(name, "\n")] = 0;
+        printf("Enter username (key): ");
+        if (fgets(username, sizeof(username), stdin)) {
+            username[strcspn(username, "\n")] = 0;
             
-            printf("Enter student ID: ");
-            if (scanf("%d", &student_id) == 1) {
-                printf("Enter GPA: ");
-                if (scanf("%lf", &gpa) == 1) {
-                    // Clear input buffer
-                    while (getchar() != '\n');
-                    
-                    printf("Enter major: ");
-                    if (fgets(major, sizeof(major), stdin)) {
-                        major[strcspn(major, "\n")] = 0;
+            printf("Enter student name: ");
+            if (fgets(name, sizeof(name), stdin)) {
+                name[strcspn(name, "\n")] = 0;
+                
+                printf("Enter student ID: ");
+                if (scanf("%d", &student_id) == 1) {
+                    printf("Enter GPA: ");
+                    if (scanf("%lf", &gpa) == 1) {
+                        // Clear input buffer
+                        while (getchar() != '\n');
                         
-                        Student *new_student = student_new(name, student_id, gpa, major);
-                        hash_table_add_student(student_table, username, new_student);
-                        
-                        printf("\nUpdated hash table:\n");
-                        hash_table_print_all(student_table);
+                        printf("Enter major: ");
+                        if (fgets(major, sizeof(major), stdin)) {
+                            major[strcspn(major, "\n")] = 0;
+                            
+                            HashStudent *new_student = hash_student_new(name, student_id, gpa, major);
+                            hash_table_add_student(student_table, username, new_student);
+                            
+                            printf("\nUpdated hash table:\n");
+                            hash_table_print_all(student_table);
+                        }
                     }
                 }
             }
         }
+    } else {
+        printf("(Skipping interactive input - not running in terminal)\n");
+        printf("Adding sample student instead...\n");
+        HashStudent *new_student = hash_student_new("Demo Student", 9999, 3.5, "Demo Major");
+        hash_table_add_student(student_table, "demo.student", new_student);
+        
+        printf("\nUpdated hash table:\n");
+        hash_table_print_all(student_table);
     }
     
     printf("\n6. Removing a student:\n");

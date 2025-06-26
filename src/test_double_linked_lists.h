@@ -4,13 +4,13 @@
 #include <glib.h>
 
 /**
- * Structure to represent a person
+ * Structure to represent a person for double linked lists demo
  */
 typedef struct {
     char *name;
     int age;
     char *city;
-} Person;
+} ListPerson;
 
 /**
  * Initialize and run double linked lists demonstration
@@ -20,17 +20,17 @@ void test_double_linked_lists(void);
 /**
  * Create a new person
  */
-Person* person_new(const char *name, int age, const char *city);
+ListPerson* list_person_new(const char *name, int age, const char *city);
 
 /**
  * Free person memory
  */
-void person_free(Person *person);
+void list_person_free(ListPerson *person);
 
 /**
  * Print person information
  */
-void person_print(Person *person);
+void list_person_print(ListPerson *person);
 
 /**
  * Print all persons in the list

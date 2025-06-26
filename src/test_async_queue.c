@@ -4,8 +4,8 @@
 #include <string.h>
 #include <unistd.h>  // for sleep
 
-Task* task_new(int task_id, const char *description, int priority) {
-    Task *task = g_malloc(sizeof(Task));
+QueueTask* queue_task_new(int task_id, const char *description, int priority) {
+    QueueTask *task = g_malloc(sizeof(QueueTask));
     task->task_id = task_id;
     task->description = g_strdup(description);
     task->priority = priority;
@@ -13,14 +13,14 @@ Task* task_new(int task_id, const char *description, int priority) {
     return task;
 }
 
-void task_free(Task *task) {
+void queue_task_free(QueueTask *task) {
     if (task) {
         g_free(task->description);
         g_free(task);
     }
 }
 
-void task_print(Task *task) {
+void queue_task_print(QueueTask *task) {
     if (task) {
         printf("  Task #%d: %s (Priority: %d, Status: %s)\n", 
                task->task_id, task->description, task->priority,
@@ -56,10 +56,10 @@ gpointer producer_function(gpointer data) {
         int priority = (i % 3) + 1;  // Priority 1-3
         const char *desc = task_descriptions[i % num_descriptions];
         
-        Task *task = task_new(i + 1, desc, priority);
+        QueueTask *task = queue_task_new(i + 1, desc, priority);
         
         printf("[Producer] Creating task: ");
-        task_print(task);
+        queue_task_print(task);
         
         // Add task to queue
         g_async_queue_push(queue, task);
@@ -69,7 +69,7 @@ gpointer producer_function(gpointer data) {
     }
     
     // Send termination signal (use a special task instead of NULL)
-    Task *termination_task = task_new(-1, "TERMINATE", 0);
+    QueueTask *termination_task = queue_task_new(-1, "TERMINATE", 0);
     g_async_queue_push(queue, termination_task);
     printf("[Producer] Finished producing tasks.\n");
     
@@ -85,17 +85,17 @@ gpointer consumer_function(gpointer data) {
     
     while (TRUE) {
         // Pop task from queue (blocks if queue is empty)
-        Task *task = (Task*)g_async_queue_pop(queue);
+        QueueTask *task = (QueueTask*)g_async_queue_pop(queue);
         
         // Check for termination signal
         if (task->task_id == -1) {
             printf("[Consumer] Received termination signal.\n");
-            task_free(task);
+            queue_task_free(task);
             break;
         }
         
         printf("[Consumer] Processing task: ");
-        task_print(task);
+        queue_task_print(task);
         
         // Simulate processing time (higher priority = faster processing)
         int processing_time = (4 - task->priority) * 1000000;  // 1-3 seconds
@@ -104,12 +104,12 @@ gpointer consumer_function(gpointer data) {
         // Mark task as completed
         task->completed = TRUE;
         printf("[Consumer] Completed task: ");
-        task_print(task);
+        queue_task_print(task);
         
         processed_count++;
         
         // Clean up task
-        task_free(task);
+        queue_task_free(task);
     }
     
     printf("[Consumer] Finished processing %d tasks.\n", processed_count);
@@ -127,7 +127,7 @@ gpointer timeout_consumer_function(gpointer data) {
     
     while (!thread_data->stop_flag) {
         // Try to pop with timeout (2 seconds)
-        Task *task = (Task*)g_async_queue_timeout_pop(queue, 2000000);  // 2 seconds in microseconds
+        QueueTask *task = (QueueTask*)g_async_queue_timeout_pop(queue, 2000000);  // 2 seconds in microseconds
         
         if (task == NULL) {
             timeout_count++;
@@ -145,19 +145,19 @@ gpointer timeout_consumer_function(gpointer data) {
         
         // Check for termination
         if (task->task_id == -1) {
-            task_free(task);
+            queue_task_free(task);
             break;
         }
         
         printf("[Timeout Consumer] Processing task: ");
-        task_print(task);
+        queue_task_print(task);
         
         // Quick processing
         g_usleep(500000);  // 0.5 seconds
         task->completed = TRUE;
         processed_count++;
         
-        task_free(task);
+        queue_task_free(task);
     }
     
     printf("[Timeout Consumer] Processed %d tasks before timeout.\n", processed_count);
@@ -173,9 +173,9 @@ void test_async_queue(void) {
     printf("\n1. Basic async queue operations:\n");
     
     // Create some tasks manually
-    Task *task1 = task_new(101, "Initialize system", 1);
-    Task *task2 = task_new(102, "Load configuration", 2);
-    Task *task3 = task_new(103, "Start services", 3);
+    QueueTask *task1 = queue_task_new(101, "Initialize system", 1);
+    QueueTask *task2 = queue_task_new(102, "Load configuration", 2);
+    QueueTask *task3 = queue_task_new(103, "Start services", 3);
     
     printf("Adding tasks to queue...\n");
     g_async_queue_push(queue, task1);
@@ -185,20 +185,20 @@ void test_async_queue(void) {
     printf("Queue length: %d\n", g_async_queue_length(queue));
     
     // Try to pop without blocking
-    Task *popped_task = (Task*)g_async_queue_try_pop(queue);
+    QueueTask *popped_task = (QueueTask*)g_async_queue_try_pop(queue);
     if (popped_task) {
         printf("Popped task: ");
-        task_print(popped_task);
-        task_free(popped_task);
+        queue_task_print(popped_task);
+        queue_task_free(popped_task);
     }
     
     printf("Queue length after pop: %d\n", g_async_queue_length(queue));
     
     // Clear remaining tasks
     while (g_async_queue_length(queue) > 0) {
-        Task *task = (Task*)g_async_queue_try_pop(queue);
+        QueueTask *task = (QueueTask*)g_async_queue_try_pop(queue);
         if (task) {
-            task_free(task);
+            queue_task_free(task);
         }
     }
     
@@ -234,8 +234,8 @@ void test_async_queue(void) {
     g_thread_join(producer2);
     
     // Send termination signals for both consumers
-    Task *term1 = task_new(-1, "TERMINATE", 0);
-    Task *term2 = task_new(-1, "TERMINATE", 0);
+    QueueTask *term1 = queue_task_new(-1, "TERMINATE", 0);
+    QueueTask *term2 = queue_task_new(-1, "TERMINATE", 0);
     g_async_queue_push(queue, term1);
     g_async_queue_push(queue, term2);
     
@@ -246,8 +246,8 @@ void test_async_queue(void) {
     printf("\n4. Timeout operations demo:\n");
     
     // Add a few tasks for timeout demo
-    Task *timeout_task1 = task_new(201, "Timeout test task 1", 2);
-    Task *timeout_task2 = task_new(202, "Timeout test task 2", 1);
+    QueueTask *timeout_task1 = queue_task_new(201, "Timeout test task 1", 2);
+    QueueTask *timeout_task2 = queue_task_new(202, "Timeout test task 2", 1);
     
     g_async_queue_push(queue, timeout_task1);
     g_async_queue_push(queue, timeout_task2);
@@ -287,11 +287,11 @@ void test_async_queue(void) {
                     priority = 2;  // Default priority
                 }
                 
-                Task *user_task = task_new(++task_counter, description, priority);
+                QueueTask *user_task = queue_task_new(++task_counter, description, priority);
                 g_async_queue_push(queue, user_task);
                 
                 printf("Added task: ");
-                task_print(user_task);
+                queue_task_print(user_task);
                 printf("Current queue length: %d\n", g_async_queue_length(queue));
             }
         }
@@ -301,15 +301,15 @@ void test_async_queue(void) {
     if (g_async_queue_length(queue) > 0) {
         printf("\nProcessing remaining tasks...\n");
         while (g_async_queue_length(queue) > 0) {
-            Task *task = (Task*)g_async_queue_try_pop(queue);
+            QueueTask *task = (QueueTask*)g_async_queue_try_pop(queue);
             if (task) {
                 printf("Processing: ");
-                task_print(task);
+                queue_task_print(task);
                 g_usleep(1000000);  // 1 second
                 task->completed = TRUE;
                 printf("Completed: ");
-                task_print(task);
-                task_free(task);
+                queue_task_print(task);
+                queue_task_free(task);
             }
         }
     }

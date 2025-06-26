@@ -4,14 +4,14 @@
 #include <glib.h>
 
 /**
- * Structure to represent a task
+ * Structure to represent a task for async queue demo
  */
 typedef struct {
     int task_id;
     char *description;
     int priority;
     gboolean completed;
-} Task;
+} QueueTask;
 
 /**
  * Initialize and run async queue demonstration
@@ -21,17 +21,17 @@ void test_async_queue(void);
 /**
  * Create a new task
  */
-Task* task_new(int task_id, const char *description, int priority);
+QueueTask* queue_task_new(int task_id, const char *description, int priority);
 
 /**
  * Free task memory
  */
-void task_free(Task *task);
+void queue_task_free(QueueTask *task);
 
 /**
  * Print task information
  */
-void task_print(Task *task);
+void queue_task_print(QueueTask *task);
 
 /**
  * Producer function - adds tasks to queue

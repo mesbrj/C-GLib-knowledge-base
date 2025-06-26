@@ -4,6 +4,7 @@
 # Build directories
 _build/
 build/
+builddir/
 dist/
 out/
 bin/
@@ -62,3 +63,11 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Temporary test files
+*_test
+*_test.c
+quick_test*
+integration_test*
+test_input.txt
+test_output.txt
