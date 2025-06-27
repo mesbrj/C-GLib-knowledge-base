@@ -1,10 +1,4 @@
 #!/bin/bash
-# GLib Knowledge Base - Integration Test Script
-# Tests all components to ensure proper build and functionality
-
-echo "=== GLib Knowledge Base Integration Test ==="
-echo "Testing build system and demo functionality..."
-echo
 
 # Ensure we're in the right directory
 cd "$(dirname "$0")"
